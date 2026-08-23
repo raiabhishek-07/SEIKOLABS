@@ -1,0 +1,132 @@
+/* ═══════════════════════════════════════════════════════════════════
+   SEIKO LABS — Layered Elevation Theme System
+   Targeting .dark / .light class & data-theme for next-themes
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Light Theme (Warm Tactile Hardware Canvas) ─── */
+:root,
+.light,
+html.light,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Layered Surface Elevation */
+  --bg-page:              #FFEED6; /* Warm cream page canvas */
+  --bg-page-alt:          #FFF6EA; /* Soft cream sub-section canvas */
+  --bg-surface-1:         #FFFFFF; /* Elevated card surface (Level 1) */
+  --bg-surface-2:         #FFF8EE; /* Component & badge surface (Level 2) */
+  --bg-surface-3:         #F5E0C0; /* Active / focused element (Level 3) */
+
+  /* Typography Roles */
+  --text-primary:         #2C241B; /* Rich dark espresso primary text */
+  --text-secondary:       #73623D; /* Earthy bronze body & subheadings */
+  --text-tertiary:        #96835B; /* Muted taupe captions & metadata */
+  --text-inverse:         #FFEED6;
+
+  /* Brand Accents */
+  --accent-primary:       #8A965E; /* Sage green primary action */
+  --accent-primary-deep:  #6E7A46;
+  --accent-primary-glow:  rgba(138, 150, 94, 0.2);
+
+  --accent-secondary:     #E8A07C; /* Warm coral secondary action */
+  --accent-secondary-deep: #D4825A;
+  --accent-secondary-glow: rgba(232, 160, 124, 0.2);
+
+  --accent-tertiary:      #827148;
+  --accent-tertiary-deep: #6B5B3A;
+
+  /* Borders & Glass */
+  --border-subtle:        rgba(115, 98, 61, 0.12);
+  --border-default:       rgba(115, 98, 61, 0.22);
+  --border-accent:        rgba(138, 150, 94, 0.4);
+  --border-strong:        rgba(138, 150, 94, 0.6);
+
+  --glass-bg-1:           rgba(255, 255, 255, 0.7);
+  --glass-bg-2:           rgba(255, 255, 255, 0.85);
+  --glass-bg-3:           rgba(255, 255, 255, 0.95);
+  --glass-border-1:       rgba(115, 98, 61, 0.08);
+  --glass-border-2:       rgba(115, 98, 61, 0.16);
+
+  /* Shadows */
+  --shadow-1: 0 2px 8px rgba(44, 36, 27, 0.05);
+  --shadow-2: 0 6px 20px rgba(44, 36, 27, 0.08);
+  --shadow-3: 0 12px 32px rgba(44, 36, 27, 0.12);
+  --shadow-4: 0 20px 48px rgba(44, 36, 27, 0.16);
+
+  /* Scrollbar */
+  --scrollbar-track:      #FFEED6;
+  --scrollbar-thumb:      #E2D0B6;
+  --scrollbar-thumb-hover: #8A965E;
+
+  /* Selection */
+  --selection-bg:         #8A965E;
+  --selection-text:       #FFFFFF;
+
+  /* Patterns */
+  --grid-line-color:      rgba(115, 98, 61, 0.06);
+  --dot-color:            rgba(115, 98, 61, 0.08);
+}
+
+
+/* ─── Dark Theme (Layered Laboratory Workbench) ─── */
+.dark,
+html.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Layered Surface Elevation */
+  --bg-page:              #1C1B20; /* Laboratory dark canvas */
+  --bg-page-alt:          #24232B; /* Sub-section canvas (Level 0.5) */
+  --bg-surface-1:         #2D2C36; /* Elevated card surface (Level 1) */
+  --bg-surface-2:         #363541; /* Component & badge surface (Level 2) */
+  --bg-surface-3:         #42414E; /* Focused & highlight surface (Level 3) */
+
+  /* Typography Roles */
+  --text-primary:         #F0F4F3; /* High-contrast soft silver primary text */
+  --text-secondary:       #A6B0AF; /* Muted silver body text */
+  --text-tertiary:        #7D7985; /* Dark mauve subtle text */
+  --text-inverse:         #1C1B20;
+
+  /* Brand Accents */
+  --accent-primary:       #C2CA9F; /* Glowing soft sage */
+  --accent-primary-deep:  #A5AF79;
+  --accent-primary-glow:  rgba(194, 202, 159, 0.18);
+
+  --accent-secondary:     #F0A886; /* Glowing warm coral */
+  --accent-secondary-deep: #E8A07C;
+  --accent-secondary-glow: rgba(240, 168, 134, 0.18);
+
+  --accent-tertiary:      #F0F4F3;
+  --accent-tertiary-deep: #A6B0AF;
+
+  /* Borders & Glass */
+  --border-subtle:        rgba(240, 244, 243, 0.08);
+  --border-default:       rgba(240, 244, 243, 0.16);
+  --border-accent:        rgba(194, 202, 159, 0.3);
+  --border-strong:        rgba(194, 202, 159, 0.5);
+
+  --glass-bg-1:           rgba(45, 44, 54, 0.65);
+  --glass-bg-2:           rgba(45, 44, 54, 0.82);
+  --glass-bg-3:           rgba(45, 44, 54, 0.95);
+  --glass-border-1:       rgba(240, 244, 243, 0.06);
+  --glass-border-2:       rgba(240, 244, 243, 0.12);
+
+  /* Shadows */
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-4: 0 20px 48px rgba(0, 0, 0, 0.6);
+
+  /* Scrollbar */
+  --scrollbar-track:      #1C1B20;
+  --scrollbar-thumb:      #363541;
+  --scrollbar-thumb-hover: #C2CA9F;
+
+  /* Selection */
+  --selection-bg:         #C2CA9F;
+  --selection-text:       #1C1B20;
+
+  /* Patterns */
+  --grid-line-color:      rgba(240, 244, 243, 0.04);
+  --dot-color:            rgba(240, 244, 243, 0.06);
+}
