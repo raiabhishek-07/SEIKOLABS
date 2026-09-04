@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
 import { STEM_KITS_CATALOG } from "@/data/products";
+import { placeCustomerOrder, OrderRecord } from "@/data/adminOrders";
 import confetti from "canvas-confetti";
 import {
   ShoppingBag,
@@ -25,7 +26,12 @@ import {
   Check,
   AlertCircle,
   HelpCircle,
-  Play
+  Play,
+  X,
+  CreditCard,
+  Phone,
+  Mail,
+  MapPin
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,8 +51,20 @@ export default function CartPage() {
   const seikoPointsBalance = 250; // 250 points = $25 discount
   const pointsDiscountValue = 25;
 
-  const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
-  const [checkoutComplete, setCheckoutComplete] = useState<boolean>(false);
+  // Checkout Modal State
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState<boolean>(false);
+  const [isProcessingOrder, setIsProcessingOrder] = useState<boolean>(false);
+  const [confirmedOrder, setConfirmedOrder] = useState<OrderRecord | null>(null);
+
+  // Form Fields
+  const [customerName, setCustomerName] = useState<string>("");
+  const [customerEmail, setCustomerEmail] = useState<string>("");
+  const [customerPhone, setCustomerPhone] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [city, setCity] = useState<string>("Hyderabad");
+  const [state, setState] = useState<string>("Telangana");
+  const [pincode, setPincode] = useState<string>("500081");
+  const [paymentMethod, setPaymentMethod] = useState<"UPI" | "Credit / Debit Card" | "Net Banking" | "Cash on Delivery">("UPI");
 
   // Free shipping threshold ($150)
   const freeShippingThreshold = 150;
@@ -124,15 +142,48 @@ export default function CartPage() {
   const totalDiscounts = couponDiscount + pointsDiscount;
   const grandTotal = Math.max(0, subtotal - totalDiscounts);
 
-  // Checkout process
-  const handleProceedToCheckout = () => {
-    setIsCheckingOut(true);
+  // Submit Real Customer Order
+  const handleConfirmOrderSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerName || !customerEmail || !customerPhone || !address) {
+      toast.error("Please fill in all shipping details");
+      return;
+    }
+
+    setIsProcessingOrder(true);
+
     setTimeout(() => {
-      setCheckoutComplete(true);
-      setIsCheckingOut(false);
+      // 1. Create order record and deduct inventory in store
+      const orderItems = cart.map((itm) => ({
+        kitId: itm.product.id,
+        name: itm.product.name,
+        quantity: itm.quantity,
+        price: itm.product.price,
+        image: itm.product.image
+      }));
+
+      const newOrder = placeCustomerOrder({
+        customerName,
+        customerEmail,
+        customerPhone,
+        address,
+        city,
+        state,
+        pincode,
+        items: orderItems,
+        subtotal,
+        discount: totalDiscounts,
+        couponCode: appliedCoupon?.code,
+        total: grandTotal,
+        paymentMethod
+      });
+
+      setConfirmedOrder(newOrder);
+      setIsProcessingOrder(false);
+      setIsCheckoutModalOpen(false);
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
       clearCart();
-    }, 1200);
+    }, 1000);
   };
 
   // Recommended products for progression (Excluding items in cart)
@@ -141,7 +192,7 @@ export default function CartPage() {
   ).slice(0, 3);
 
   // ════ STATE 1: ORDER CONFIRMED SCREEN ════
-  if (checkoutComplete) {
+  if (confirmedOrder) {
     return (
       <div className="pt-32 pb-24 min-h-screen transition-colors duration-300" style={{ backgroundColor: "var(--bg-page)", color: "var(--text-primary)" }}>
         <div className="seiko-container max-w-2xl mx-auto text-center space-y-6 animate-fadeIn">
@@ -151,21 +202,35 @@ export default function CartPage() {
           
           <div className="space-y-2">
             <span className="text-xs font-mono font-bold text-[#5C6B38] uppercase tracking-wider">
-              ORDER CONFIRMED #SEIKO-8492
+              ORDER CONFIRMED #{confirmedOrder.id}
             </span>
             <h1 className="text-2xl sm:text-3xl font-bold font-['Fraunces'] text-[var(--text-primary)]">
               You&apos;re Ready to Start Building!
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed max-w-md mx-auto">
-              Thank you for empowering hands-on STEM learning. We have emailed your order receipt and tracking updates.
+              Thank you, <strong>{confirmedOrder.customerName}</strong>! Confirmation details and tracking will be sent to <strong>{confirmedOrder.customerEmail}</strong>.
             </p>
           </div>
 
-          <div className="p-6 rounded-3xl border text-left space-y-4" style={{ backgroundColor: "var(--bg-surface-1)", borderColor: "var(--border-subtle)" }}>
-            <h3 className="text-xs font-bold font-mono text-[#5C6B38] uppercase">Next Step: Launch Your Workspace</h3>
-            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              While your physical hardware is being packaged, explore the full step-by-step schematics, video modules, and C++ firmware code in the online learning portal.
-            </p>
+          <div className="p-6 rounded-3xl border text-left space-y-4 shadow-xs" style={{ backgroundColor: "var(--bg-surface-1)", borderColor: "var(--border-subtle)" }}>
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-xs font-bold font-mono text-[#5C6B38] uppercase">Order Breakdown</h3>
+              <span className="text-xs font-mono font-bold text-[var(--text-primary)]">Total: ${confirmedOrder.total.toFixed(2)}</span>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              {confirmedOrder.items.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <span className="text-[var(--text-primary)] font-medium">{item.quantity}x {item.name}</span>
+                  <span className="font-mono text-[var(--text-secondary)]">${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
+              <strong>Delivering to:</strong> {confirmedOrder.address}, {confirmedOrder.city}, {confirmedOrder.state} ({confirmedOrder.pincode})
+            </div>
+
             <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
               <Link
                 href="/robotics/smart-robotics-rover-kit"
@@ -529,7 +594,7 @@ export default function CartPage() {
 
                 {useSeikoPoints && (
                   <div className="flex justify-between text-emerald-600 font-semibold">
-                    <span>SEIKO Points Discount</span>
+                    <span>SEKO Points Discount</span>
                     <span className="font-mono">-${pointsDiscountValue.toFixed(2)}</span>
                   </div>
                 )}
@@ -562,18 +627,11 @@ export default function CartPage() {
 
               {/* Dominant Primary Checkout Button (48-54px) */}
               <button
-                onClick={handleProceedToCheckout}
-                disabled={isCheckingOut}
-                className="w-full h-12 rounded-full text-xs font-bold bg-[#5C6B38] text-white hover:bg-[#4E5B2E] transition-all flex items-center justify-center gap-2 shadow-xs hover:shadow-md hover:scale-102 cursor-pointer disabled:opacity-60"
+                onClick={() => setIsCheckoutModalOpen(true)}
+                className="w-full h-12 rounded-full text-xs font-bold bg-[#5C6B38] text-white hover:bg-[#4E5B2E] transition-all flex items-center justify-center gap-2 shadow-xs hover:shadow-md hover:scale-102 cursor-pointer"
               >
-                {isCheckingOut ? (
-                  <span>Processing Checkout...</span>
-                ) : (
-                  <>
-                    <span>Proceed to Checkout</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
+                <span>Proceed to Checkout</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
 
               {/* Trust Indicators */}
@@ -636,6 +694,167 @@ export default function CartPage() {
         )}
 
       </div>
+
+      {/* ═══ 5. REAL CHECKOUT & SHIPPING DETAILS MODAL ═══ */}
+      {isCheckoutModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <form
+            onSubmit={handleConfirmOrderSubmit}
+            className="w-full max-w-lg rounded-3xl border p-6 space-y-4 shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto"
+            style={{ backgroundColor: "var(--bg-surface-1)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
+          >
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <div className="space-y-0.5">
+                <h3 className="text-base font-bold font-['Fraunces'] text-[var(--text-primary)]">
+                  Delivery &amp; Payment Details
+                </h3>
+                <p className="text-[11px] text-[var(--text-secondary)]">
+                  Complete your order of {cart.length} STEM kits (${grandTotal.toFixed(2)})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCheckoutModalOpen(false)}
+                className="p-1.5 rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Dr. Vikram Patel"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-xs focus:outline-none focus:border-[#5C6B38]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="+91 98490 12345"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-xs font-mono focus:outline-none focus:border-[#5C6B38]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="vikram@stem.edu"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-xs focus:outline-none focus:border-[#5C6B38]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1">Shipping Street Address *</label>
+                <textarea
+                  required
+                  rows={2}
+                  placeholder="Plot 42, Hitech City Main Rd, Madhapur"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-xs focus:outline-none focus:border-[#5C6B38]"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-[10px] font-medium text-[var(--text-secondary)] mb-1">City</label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-xs focus:outline-none focus:border-[#5C6B38]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-[var(--text-secondary)] mb-1">State</label>
+                  <input
+                    type="text"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-xs focus:outline-none focus:border-[#5C6B38]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-[var(--text-secondary)] mb-1">PIN Code</label>
+                  <input
+                    type="text"
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-xs font-mono focus:outline-none focus:border-[#5C6B38]"
+                  />
+                </div>
+              </div>
+
+              {/* Payment Method Radio */}
+              <div className="pt-2">
+                <label className="block text-[11px] font-medium text-[var(--text-secondary)] mb-1.5">Payment Method</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: "UPI", label: "UPI / GPay / PhonePe" },
+                    { id: "Credit / Debit Card", label: "Cards & Net Banking" }
+                  ].map((m) => (
+                    <button
+                      type="button"
+                      key={m.id}
+                      onClick={() => setPaymentMethod(m.id as any)}
+                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2 cursor-pointer transition-all ${
+                        paymentMethod === m.id
+                          ? "border-[#5C6B38] bg-[#5C6B38]/10 text-[#5C6B38] font-bold"
+                          : "border-[var(--border-subtle)] bg-[var(--bg-surface-2)] text-[var(--text-secondary)]"
+                      }`}
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span className="text-[11px]">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsCheckoutModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isProcessingOrder}
+                className="px-6 py-3 rounded-full text-xs font-bold bg-[#5C6B38] text-white hover:bg-[#4E5B2E] transition-all flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-60"
+              >
+                {isProcessingOrder ? (
+                  <span>Securing Order...</span>
+                ) : (
+                  <>
+                    <span>Pay &amp; Confirm Order (${grandTotal.toFixed(2)})</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
     </div>
   );
 }
