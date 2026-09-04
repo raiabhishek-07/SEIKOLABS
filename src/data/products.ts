@@ -51,6 +51,7 @@ export interface KitProduct {
   categoryFullName: string;
   category?: string;
   color?: string;
+  discipline?: string;
   tagline: string;
   description: string;
   price: number;

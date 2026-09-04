@@ -396,7 +396,7 @@ export default function CartPage() {
                       {/* Info */}
                       <div className="min-w-0 space-y-1">
                         <span className="text-[10px] font-mono font-bold text-[#5C6B38] uppercase">
-                          {item.product.discipline || "STEM LAB"}
+                          {item.product.discipline || item.product.categoryLabel || "STEM LAB"}
                         </span>
 
                         <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] leading-snug line-clamp-2">
